@@ -8,6 +8,7 @@ class App(tk.Frame):
         self.create_buttons()
 
     def create_buttons(self):
+        '''
         self.billings = tk.Button(self, 
             bd="3",
             cursor="hand",
@@ -15,16 +16,23 @@ class App(tk.Frame):
             height="10",
             width='20'
         ).pack(side='left', expand=200)
+        '''
         self.inventory = tk.Button(self, 
-            bd="3",        
-            cursor="hand",        
-            text="Inventario",
-            height="10",
-            width='20'
-        ).pack(side='right', expand=200)
+            cursor = "hand",     
+            height = "10",
+            text = "Inventario",
+            width = "20"
+        )
+        self.inventory.place(
+            relx=.5,
+            rely=.5,
+            anchor='nw'
+        )
+        self.inventory.pack(expand=0)
 
 root = tk.Tk()
 no_name = App(master=root)
 no_name.master.title('No Name')
-no_name.master.maxsize(1000, 400)
+no_name.master.minsize(800, 600)
+no_name.master.maxsize(1800, 1200)
 no_name.mainloop()
