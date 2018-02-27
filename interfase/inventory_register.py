@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 # Window to registter a product
 class Register_Product(tk.Frame):
     def __init__(self, master=None):
@@ -62,15 +63,12 @@ class Register_Product(tk.Frame):
         d = self.purchase_value.get() != ''
         e = self.stock.get() != ''
         print(a, b, c, d, e)
-        if a or b or c or d or e:
+        if a and b and c and d and e:
             print('Call back')
             if self.multiple_buttons.instate(['selected']):
                 print('Fuck')
             else:
                 self.quit()
-
-
-
 root = tk.Tk()
 register_interfase = Register_Product(root)
 root.quit()

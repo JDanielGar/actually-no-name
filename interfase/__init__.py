@@ -1,6 +1,4 @@
 import tkinter as tk
-from tkinter import *
-
 
 class App(tk.Frame):
     def __init__(self, master=None):
