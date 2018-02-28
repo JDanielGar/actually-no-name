@@ -15,3 +15,5 @@ class Product(object):
         self.purchase_value = purchase_value
     def change_stock(self, stock):
         self.stock = stock
+    def __str__(self):
+        return "<{0} => {1}>".format(self.__class__.__name__, self.product_id)
