@@ -59,7 +59,7 @@ class App(Frame):
         # Self buttons
         self.add_button = Button(self, text='+', height='2', width='4', command=self.register_product)
         self.modify_button = Button(self, text='M', height='2', width='4', command=self.modify_product)
-        self.delete_button = Button(self, text='-', height='2', width='4', command=self.sure_advertise)
+        self.delete_button = Button(self, text='-', height='2', width='4', command=self.delete_product)
 
         # Pack buttons in order
         self.add_button.place(x=330, y=150)
@@ -192,9 +192,12 @@ class App(Frame):
         if self.tree.item(self.tree.focus())['text'] == '':
             self.popup('Advertencia', 'Nada seleccionado')
         else:
-            delete_product(self.tree.item(self.tree.focus())['text'])
-            self.tree.delete(self.tree.focus())
-            self.pop_up.destroy()
+            self.sure_advertise()
+
+    def delete_instance(self):
+        delete_product(self.tree.item(self.tree.focus())['text'])
+        self.tree.delete(self.tree.focus())
+        self.pop_up.destroy()
 
     def sure_advertise(self):
         self.pop_up = Toplevel(self)
@@ -205,7 +208,7 @@ class App(Frame):
         label.pack(pady=10)
         label_2 = Label(self.pop_up, text='el producto?')
         label_2.place(x=54,y=28)
-        acept = Button(self.pop_up, text="Aceptar", command=self.delete_product, height=2, width=8)
+        acept = Button(self.pop_up, text="Aceptar", command=self.delete_instance, height=2, width=8)
         decline = Button(self.pop_up, text="Cancelar", command=self.pop_up.destroy, height=2, width=8)
         acept.place(x=100, y=50)
         decline.place(x=25, y=50)
