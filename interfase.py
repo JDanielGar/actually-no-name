@@ -257,12 +257,13 @@ class Register_Product(Frame):
             self.stock.insert(0, self.tree.item(self.tree.focus())['values'][3])
 
     def init_buttons(self):
-        self.multiple_buttons = ttk.Checkbutton(
-            self.master,
-            text='Varios'
-        )
-        self.multiple_buttons.pack(pady='5')
-        self.multiple_buttons.state(['!alternate'])        
+        if not self.is_modify:
+            self.multiple_buttons = ttk.Checkbutton(
+                self.master,
+                text='Varios'
+            )
+            self.multiple_buttons.pack(pady='5')
+            self.multiple_buttons.state(['!alternate'])        
         self.cancel_button = Button(
             self.master, 
             command=self.master.destroy,
