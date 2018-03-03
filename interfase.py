@@ -11,9 +11,9 @@ class App(Frame):
         super().__init__(master)
         self.database = database
         self.master.title('App')
+        self.choice = 'Nombre' # Current Choice of OptionMenu
         self.master.minsize(800, 600)
         self.master.maxsize(800, 600)
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing())
         self.pack(side="top", fill="both", expand=True, pady=100)
         self.main_menu()
         self.mainloop()
@@ -46,14 +46,14 @@ class App(Frame):
         self.search_input = Entry(self, width=55)
         self.search_input.place(x=50, y=100)
 
-        self.search_button = Button(self, text='Buscar')
+        self.search_button = Button(self, text='Buscar', command=self.search_item)
         self.search_button.place(x=570, y=98, height=30, width=60)
 
         # Filter
         self.option_filter = ('Nombre', 'Codigo', 'Cantidad')
         self.filter_variable = StringVar(self)
         self.filter_variable.set(self.option_filter[0])
-        self.search_filter = OptionMenu(self, self.filter_variable, *self.option_filter)
+        self.search_filter = OptionMenu(self, self.filter_variable, *self.option_filter, command=self.get_choice)
         self.search_filter.place(x=640, y=100)
 
         # Self buttons
@@ -95,14 +95,54 @@ class App(Frame):
         
         self.tree.place(x=75, y=200)
 
-        self.load_items()
+        self.load_items(load_products())
+
+
+    # Functions to search items and comunicate with the interfase
+
+    def search_item(self):
+        '''
+        Search item from DB and send choices to tree
+        '''
+        db = shelve.open('Productos')
+        choices = []
+        if self.choice == 'Nombre':
+            for product in db['Productos']:
+                print(self.search_input.get())
+                if product.product_name == self.search_input.get():
+                    choices.append(product)
+        elif self.choice == 'Codigo':
+            for product in db['Productos']:
+                print(self.search_input.get())
+                if product.product_id == self.search_input.get():
+                    choices.append(product)
+                    break
+        else:
+            for product in db['Productos']:
+                print(self.search_input.get())
+                if product.stock == self.search_input.get():
+                    choices.append(product)
+        if len(choices) == 0:
+            self.popup('Error', 'No se encontro el '+self.choice)
+        else:
+            self.tree.delete(*self.tree.get_children())
+            self.load_items(choices)
+
+    def get_choice(self, value):
+        '''
+        Get the choice from the OptionMenu ( self.search_filter )
+        '''
+        self.choice = value
+
+
+    def billings_menu(self): # TODO
+        print('On boarding')
 
     def select_tree(self, a):
         self.current_item = self.tree.item(self.tree.focus())
-        print(self.current_item)
     
-    def load_items(self):
-        products_list = load_products()
+    def load_items(self, value):
+        products_list = value
         for product in products_list:
             self.tree.insert(
                 "", 
@@ -115,6 +155,7 @@ class App(Frame):
                     product.stock
                 )
             )
+
     def delete_main(self, command):
         self.main_title.destroy()
         self.billings.destroy()
@@ -122,6 +163,8 @@ class App(Frame):
         if command == 0:
             # Should open inventory menu
             self.inventory_menu()
+        else:
+            self.billings_menu()
 
     def modify_product(self):
         Register_Product(Toplevel(self), is_modify=True, tree=self.tree)
@@ -133,9 +176,6 @@ class App(Frame):
         delete_product(self.tree.item(self.tree.focus())['text'])
         self.tree.delete(self.tree.focus())
         self.pop_up.destroy()
-
-    def on_closing(self):
-        print('Helloooooooooooooooo')
 
     def sure_advertise(self):
         self.pop_up = Toplevel(self)
@@ -150,6 +190,17 @@ class App(Frame):
         decline = Button(self.pop_up, text="Cancelar", command=self.pop_up.destroy, height=2, width=8)
         acept.place(x=100, y=50)
         decline.place(x=25, y=50)
+    
+    def popup(self, title, text):
+        pop_up = Toplevel(self)
+        pop_up.wm_title(title)
+        pop_up.minsize(200, 100)
+        pop_up.maxsize(200, 100)
+        
+        label = Label(pop_up, text=text)
+        label.pack(pady=10)
+        exit_button = Button(pop_up, text="Aceptar", command=pop_up.destroy, height=2, width=8)
+        exit_button.pack()
 
 
 class Register_Product(Frame):
@@ -162,8 +213,6 @@ class Register_Product(Frame):
         self.master.maxsize(500, 420)
         self.init_inputs()
         self.init_buttons()
-
-
 
     def init_inputs(self):
         self.text('Registra tu producto:')
@@ -194,7 +243,7 @@ class Register_Product(Frame):
         self.multiple_buttons.state(['!alternate'])        
         self.cancel_button = Button(
             self.master, 
-            command=self.quit,
+            command=self.master.destroy(),
             height=2,
             text='Cancelar', 
             width=8)
@@ -215,9 +264,6 @@ class Register_Product(Frame):
     def text(self, text):
         label = Label(self.master, text=text)
         label.pack()
-
-    def quit(self):
-        self.master.destroy()
 
     def validate_fields(self):
         a = self.product_id.get() != ''
@@ -296,6 +342,7 @@ class Register_Product(Frame):
                 product_list.stock
             )
         )
+
     def erase_fields(self):
         self.product_id.delete('0', 'end')
         self.product_name.delete('0', 'end')
