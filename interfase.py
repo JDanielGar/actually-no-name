@@ -67,9 +67,9 @@ class App(Frame):
         self.delete_button.place(x=430, y=150)
 
         # Add list of items
-        self.item_list()
+        self.inventory_items()
 
-    def item_list(self):
+    def inventory_items(self):
         self.tree = ttk.Treeview(self)
         self.tree['columns'] = ('Nombre', 'Compra', 'Venta', 'Stock')
         self.tree.bind('<ButtonRelease-1>', self.select_tree)
@@ -108,32 +108,35 @@ class App(Frame):
         choices = []
         if self.choice == 'Nombre':
             for product in db['Productos']:
-                print(self.search_input.get())
                 if product.product_name == self.search_input.get():
                     choices.append(product)
         elif self.choice == 'Codigo':
             for product in db['Productos']:
-                print(self.search_input.get())
                 if product.product_id == self.search_input.get():
                     choices.append(product)
                     break
         else:
             for product in db['Productos']:
-                print(self.search_input.get())
                 if product.stock == self.search_input.get():
                     choices.append(product)
         if len(choices) == 0:
             self.popup('Error', 'No se encontro el '+self.choice)
         else:
             self.tree.delete(*self.tree.get_children())
+            self.return_button = Button(self, text='Mostrar todos', height='2', width='11', command=self.return_products)
+            self.return_button.place(x=600, y=150)
             self.load_items(choices)
 
+    def return_products(self):
+        self.tree.delete(*self.tree.get_children())
+        self.load_items(load_products())
+        self.return_button.destroy()
+        
     def get_choice(self, value):
         '''
         Get the choice from the OptionMenu ( self.search_filter )
         '''
         self.choice = value
-
 
     def billings_menu(self): # TODO
         print('On boarding')
@@ -142,6 +145,9 @@ class App(Frame):
         self.current_item = self.tree.item(self.tree.focus())
     
     def load_items(self, value):
+        '''
+        Load items according to a product schema (value) to the Tree (self.tree)
+        '''
         products_list = value
         for product in products_list:
             self.tree.insert(
@@ -402,7 +408,6 @@ def delete_product(id):
             del(persistence[index])
             db['Productos'] = persistence
             break
-
     
 def is_existing_id(id):
     db = shelve.open('Productos')
@@ -412,7 +417,6 @@ def is_existing_id(id):
             return True
     db.close()
     return False
-
 
 root = Tk()
 myapp = App(root)
