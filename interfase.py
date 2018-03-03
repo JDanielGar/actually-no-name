@@ -231,8 +231,12 @@ class Register_Product(Frame):
         self.tree = tree
         self.is_modify = is_modify
         self.master.title('Producto')
-        self.master.minsize(300, 420)
-        self.master.maxsize(500, 420)
+        if is_modify:
+            self.master.minsize(300, 390)
+            self.master.maxsize(500, 390)
+        else:
+            self.master.minsize(300, 420)
+            self.master.maxsize(500, 420)    
         self.init_inputs()
         self.init_buttons()
 
