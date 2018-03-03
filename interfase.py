@@ -58,8 +58,8 @@ class App(Frame):
 
         # Self buttons
         self.add_button = Button(self, text='+', height='2', width='4', command=self.register_product)
-        self.modify_button = Button(self, text='M', height='2', width='4')
-        self.delete_button = Button(self, text='-', height='2', width='4')
+        self.modify_button = Button(self, text='M', height='2', width='4', command=self.modify_product)
+        self.delete_button = Button(self, text='-', height='2', width='4', command=self.sure_advertise)
 
         # Pack buttons in order
         self.add_button.place(x=330, y=150)
@@ -72,6 +72,11 @@ class App(Frame):
     def item_list(self):
         self.tree = ttk.Treeview(self)
         self.tree['columns'] = ('Nombre', 'Compra', 'Venta', 'Stock')
+        self.tree.bind('<ButtonRelease-1>', self.select_tree)
+
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
+        self.scrollbar.place(x=700, y=200, height=200)
+        self.tree.configure(yscrollcommand=self.scrollbar.set)
 
         self.tree.heading('#0', text='Id')
         self.tree.column("#0", width=100)
@@ -90,6 +95,26 @@ class App(Frame):
         
         self.tree.place(x=75, y=200)
 
+        self.load_items()
+
+    def select_tree(self, a):
+        self.current_item = self.tree.item(self.tree.focus())
+        print(self.current_item)
+    
+    def load_items(self):
+        products_list = load_products()
+        for product in products_list:
+            self.tree.insert(
+                "", 
+                "end", 
+                text=product.product_id, 
+                values = (
+                    product.product_name,
+                    product.sale_value,
+                    product.purchase_value,
+                    product.stock
+                )
+            )
     def delete_main(self, command):
         self.main_title.destroy()
         self.billings.destroy()
@@ -98,21 +123,46 @@ class App(Frame):
             # Should open inventory menu
             self.inventory_menu()
 
+    def modify_product(self):
+        Register_Product(Toplevel(self), is_modify=True, tree=self.tree)
+
     def register_product(self):
-        Register_Product(Toplevel(self))
+        Register_Product(Toplevel(self), tree=self.tree)
+    
+    def delete_product(self):
+        delete_product(self.tree.item(self.tree.focus())['text'])
 
     def on_closing(self):
         print('Helloooooooooooooooo')
 
+    def sure_advertise(self):
+        pop_up = Toplevel(self)
+        pop_up.wm_title('Advertencia')
+        pop_up.minsize(200, 100)
+        pop_up.maxsize(200, 100)
+        label = Label(pop_up, text='¿Está seguro de eliminar')
+        label.pack(pady=10)
+        label_2 = Label(pop_up, text='el producto?')
+        label_2.place(x=54,y=28)
+        acept = Button(pop_up, text="Aceptar", command=self.delete_product, height=2, width=8)
+        decline = Button(pop_up, text="Cancelar", command=pop_up.destroy, height=2, width=8)
+        acept.place(x=100, y=50)
+        decline.place(x=25, y=50)
+
+
 class Register_Product(Frame):
-    def __init__(self, master=None, database=None):
+    def __init__(self, master=None, tree=None, is_modify=False):
         super().__init__(master)
-        self.database = database
+        self.tree = tree
+        self.is_modify = is_modify
         self.master.title('Producto')
         self.master.minsize(300, 420)
         self.master.maxsize(500, 420)
         self.init_inputs()
         self.init_buttons()
+
+
+
     def init_inputs(self):
         self.text('Registra tu producto:')
         self.text('ID Producto:')
@@ -126,6 +176,13 @@ class Register_Product(Frame):
         self.purchase_value = self.input('...')
         self.text('Cantidad del Producto')
         self.stock = self.input('...')
+        if self.is_modify:
+            self.product_id.insert(0, self.tree.item(self.tree.focus())['text'])
+            self.product_name.insert(0, self.tree.item(self.tree.focus())['values'][0])
+            self.sale_value.insert(0, self.tree.item(self.tree.focus())['values'][1])
+            self.purchase_value.insert(0, self.tree.item(self.tree.focus())['values'][2])
+            self.stock.insert(0, self.tree.item(self.tree.focus())['values'][3])
+
     def init_buttons(self):
         self.multiple_buttons = ttk.Checkbutton(
             self.master,
@@ -147,15 +204,19 @@ class Register_Product(Frame):
             text='Salvar',
             width=8)
         self.save_button.pack(pady='5')
+
     def input(self, text):
         inputer = Entry(self.master)
         inputer.pack()
         return inputer
+
     def text(self, text):
         label = Label(self.master, text=text)
         label.pack()
+
     def quit(self):
-        self.master.quit()
+        self.master.destroy()
+
     def validate_fields(self):
         a = self.product_id.get() != ''
         b = self.product_name.get() != ''
@@ -163,22 +224,86 @@ class Register_Product(Frame):
         d = self.purchase_value.get() != ''
         e = self.stock.get() != ''
         if a and b and c and d and e:
-            if self.multiple_buttons.instate(['selected']):
-                pass
+            if not self.is_modify:
+                if is_existing_id(self.product_id.get()):
+                    self.popup('Error', 'Ya existe ese ID')
+                else:
+                    if self.multiple_buttons.instate(['selected']):
+                        save_product((Product(
+                            self.product_id.get(), 
+                            self.product_name.get(), 
+                            self.sale_value.get(), 
+                            self.purchase_value.get(),
+                            self.stock.get()
+                        )))
+                        self.popup('Alerta', 'Producto añadido')
+                        self.erase_fields()
+                        self.load_last_item()                
+                    else:
+                        save_product((Product(
+                            self.product_id.get(), 
+                            self.product_name.get(), 
+                            self.sale_value.get(), 
+                            self.purchase_value.get(),
+                            self.stock.get()
+                        )))
+                        self.popup('Alerta', 'Producto añadido')                
+                        self.master.destroy()
+                        self.load_last_item()
             else:
-                save_product((Product(
-                    self.product_id.get(), 
-                    self.product_name.get(), 
-                    self.sale_value.get(), 
-                    self.purchase_value.get(),
-                    self.stock.get()
-                )))
-                self.master.destroy()
+                if is_existing_id(self.product_id.get()):
+                    self.popup('Error', 'Ya existe ese ID')
+                else:         
+                    modify_product(
+                        self.tree.item(self.tree.focus())['text'],
+                        Product(
+                            self.product_id.get(), 
+                            self.product_name.get(), 
+                            self.sale_value.get(), 
+                            self.purchase_value.get(),
+                            self.stock.get()
+                        )
+                    )
+                    self.tree.insert(
+                        "", 
+                        str(int(self.tree.focus()[1:])-1), 
+                        text=self.product_id.get(), 
+                        values = (
+                            self.product_name.get(), 
+                            self.sale_value.get(), 
+                            self.purchase_value.get(),
+                            self.stock.get()
+                        )
+                    )
+                    self.tree.delete(self.tree.focus())
+                    
+                    self.master.destroy()
         else:
-            self.error_popup('Hacen falta campos.')
-    def error_popup(self, text):
+            self.popup('Error', 'Hacen falta campos.')
+    
+    def load_last_item(self):
+        product_list = load_products()[-1]
+        self.tree.insert(
+            "", 
+            "end", 
+            text=product_list.product_id, 
+            values = (
+                product_list.product_name,
+                product_list.sale_value,
+                product_list.purchase_value,
+                product_list.stock
+            )
+        )
+    def erase_fields(self):
+        self.product_id.delete('0', 'end')
+        self.product_name.delete('0', 'end')
+        self.sale_value.delete('0', 'end')
+        self.purchase_value.delete('0', 'end')
+        self.stock.delete('0', 'end')
+    
+    def popup(self, title, text):
         pop_up = Toplevel(self)
-        pop_up.wm_title('Error')
+        pop_up.wm_title(title)
         pop_up.minsize(200, 100)
         pop_up.maxsize(200, 100)
         
@@ -187,20 +312,58 @@ class Register_Product(Frame):
         exit_button = Button(pop_up, text="Aceptar", command=pop_up.destroy, height=2, width=8)
         exit_button.pack()
 
+
+############
+
 def save_product(product):
     db = shelve.open('Productos')
     if len(db) > 0:
         persistence = db['Productos']
         persistence.append(product)
         db['Productos'] = persistence
-        print('Correcto')    
     else:
         db['Productos'] = []
         db['Productos'] = [product]
-        print('Incorrecto')
-    print(db['Productos'])
-        
     db.close()
+
+def load_products():
+    db = shelve.open('Productos')
+    if len(db) > 0:
+        return db['Productos']
+    else:
+        return []
+
+def modify_product(product_id, product):
+    db = shelve.open('Productos')
+    for index in range(len(db['Productos'])):
+        print(db['Productos'][index].product_id)
+        print(product_id)
+        if db['Productos'][index].product_id == product_id:
+            persistence = db['Productos']
+            persistence[index] = product
+            db['Productos'] = persistence
+            break
+    db.close()
+
+def delete_product(id):
+    db = shelve.open('Productos')
+    for index in range(len(db['Productos'])):
+        if db['Productos'][index].product_id == id:
+            persistence = db['Productos']
+            del(persistence[index])
+            db['Productos'] = persistence
+            break
+
+    
+def is_existing_id(id):
+    db = shelve.open('Productos')
+    for product in db['Productos']:
+        if id == product.product_id:
+            db.close()
+            return True
+    db.close()
+    return False
+
 
 root = Tk()
 myapp = App(root)
