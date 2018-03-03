@@ -131,21 +131,23 @@ class App(Frame):
     
     def delete_product(self):
         delete_product(self.tree.item(self.tree.focus())['text'])
+        self.tree.delete(self.tree.focus())
+        self.pop_up.destroy()
 
     def on_closing(self):
         print('Helloooooooooooooooo')
 
     def sure_advertise(self):
-        pop_up = Toplevel(self)
-        pop_up.wm_title('Advertencia')
-        pop_up.minsize(200, 100)
-        pop_up.maxsize(200, 100)
-        label = Label(pop_up, text='¿Está seguro de eliminar')
+        self.pop_up = Toplevel(self)
+        self.pop_up.wm_title('Advertencia')
+        self.pop_up.minsize(200, 100)
+        self.pop_up.maxsize(200, 100)
+        label = Label(self.pop_up, text='¿Está seguro de eliminar')
         label.pack(pady=10)
-        label_2 = Label(pop_up, text='el producto?')
+        label_2 = Label(self.pop_up, text='el producto?')
         label_2.place(x=54,y=28)
-        acept = Button(pop_up, text="Aceptar", command=self.delete_product, height=2, width=8)
-        decline = Button(pop_up, text="Cancelar", command=pop_up.destroy, height=2, width=8)
+        acept = Button(self.pop_up, text="Aceptar", command=self.delete_product, height=2, width=8)
+        decline = Button(self.pop_up, text="Cancelar", command=self.pop_up.destroy, height=2, width=8)
         acept.place(x=100, y=50)
         decline.place(x=25, y=50)
 
@@ -251,7 +253,7 @@ class Register_Product(Frame):
                         self.master.destroy()
                         self.load_last_item()
             else:
-                if is_existing_id(self.product_id.get()):
+                if is_existing_id(self.product_id.get()) and self.tree.item(self.tree.focus())['text'] != self.product_id.get():
                     self.popup('Error', 'Ya existe ese ID')
                 else:         
                     modify_product(
