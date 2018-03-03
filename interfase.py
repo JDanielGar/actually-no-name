@@ -128,6 +128,9 @@ class App(Frame):
             self.load_items(choices)
 
     def return_products(self):
+        '''
+        Return Tree product to original state
+        '''
         self.tree.delete(*self.tree.get_children())
         self.load_items(load_products())
         self.return_button.destroy()
@@ -138,8 +141,12 @@ class App(Frame):
         '''
         self.choice = value
 
+    # Billings Menu
+
     def billings_menu(self): # TODO
         print('On boarding')
+
+    # Tree Functions
 
     def select_tree(self, a):
         self.current_item = self.tree.item(self.tree.focus())
@@ -173,15 +180,21 @@ class App(Frame):
             self.billings_menu()
 
     def modify_product(self):
-        Register_Product(Toplevel(self), is_modify=True, tree=self.tree)
+        if self.tree.item(self.tree.focus())['text'] == '':
+            self.popup('Advertencia', 'Nada seleccionado')
+        else:
+            Register_Product(Toplevel(self), is_modify=True, tree=self.tree)
 
     def register_product(self):
         Register_Product(Toplevel(self), tree=self.tree)
     
     def delete_product(self):
-        delete_product(self.tree.item(self.tree.focus())['text'])
-        self.tree.delete(self.tree.focus())
-        self.pop_up.destroy()
+        if self.tree.item(self.tree.focus())['text'] == '':
+            self.popup('Advertencia', 'Nada seleccionado')
+        else:
+            delete_product(self.tree.item(self.tree.focus())['text'])
+            self.tree.delete(self.tree.focus())
+            self.pop_up.destroy()
 
     def sure_advertise(self):
         self.pop_up = Toplevel(self)
