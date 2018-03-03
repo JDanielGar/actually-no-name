@@ -249,7 +249,7 @@ class Register_Product(Frame):
         self.multiple_buttons.state(['!alternate'])        
         self.cancel_button = Button(
             self.master, 
-            command=self.master.destroy(),
+            command=self.master.destroy,
             height=2,
             text='Cancelar', 
             width=8)
