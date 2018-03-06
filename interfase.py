@@ -1,27 +1,70 @@
+# Initialice Shelve for data persistence
 import shelve
 
+# Initialice tkinter interfase
 from tkinter import Tk, Frame, Label, Button, Entry, StringVar, OptionMenu, Toplevel
 from tkinter import ttk
-from logic import Product
 
+# Open Productos database.
 shelve.open('Productos')
 
+# Products class for load items.
+class Product(object):
+    '''
+    Product class to play with data. 
+    Content: 
+        Id
+        Name 
+        Sale 
+        Purchase
+        Stock 
+    '''
+    def __init__(self, product_id, product_name, sale_value, purchase_value, stock):
+        self.product_id = product_id
+        self.product_name = product_name
+        self.sale_value = sale_value
+        self.purchase_value = purchase_value
+        self.stock = stock
+    def change_id(self, product_id):
+        self.product_id = product_id
+    def change_name(self, product_name):
+        self.product_name = product_name
+    def change_sale_value(self, sale_value):
+        self.sale_value = sale_value
+    def change_purchase_value(self, purchase_value):
+        self.purchase_value = purchase_value
+    def change_stock(self, stock):
+        self.stock = stock
+    def __str__(self):
+        return "<{0} => {1}>".format(self.__class__.__name__, self.product_id)
+
+
+# Create the main class
 class App(Frame):
-    def __init__(self, master=None, database=None):
+    def __init__(self, master=None):
         super().__init__(master)
-        self.database = database
+        self.init_properties()
+        self.main_menu()
+        self.mainloop() # Main Loop of app.
+
+    def init_properties(self):
+        '''
+        Initialice the initial properties of master and app
+        '''
         self.master.title('App')
-        self.choice = 'Nombre' # Current Choice of OptionMenu
+        self.choice = 'Nombre' # Current Choice of OptionMenu TODO Change This shit
         self.master.minsize(800, 600)
         self.master.maxsize(800, 600)
         self.pack(side="top", fill="both", expand=True, pady=100)
-        self.main_menu()
-        self.mainloop()
 
     def main_menu(self):
+        '''
+        Initialice FIRST menu of program
+        '''
         self.main_title = Label(self, text='Panel de Control', font=("Helvetica", 35), width=100)
         self.main_title.pack()
         self.billings = Button(self, 
+            command=lambda:self.delete_main(0),
             cursor="hand",
             text="Facturación",
             height="10",
@@ -29,7 +72,7 @@ class App(Frame):
         )
         self.billings.place(x=420, y=130, height=160, width=160)
         self.inventory = Button(self,
-            command=lambda:self.delete_main(0),
+            command=lambda:self.delete_main(1),
             cursor = "hand",     
             height = "10",
             text = "Inventario",
@@ -37,15 +80,31 @@ class App(Frame):
         )
         self.inventory.place(x=210, y=130, height=160, width=160)
 
+    def delete_main(self, command):
+        '''
+        Delete FIRST menu to open Billings/Inventory SECOND menu.
+        '''
+        self.main_title.destroy()
+        self.billings.destroy()
+        self.inventory.destroy()
+        if command == 0:
+            self.billings_menu()
+        else:
+            self.inventory_menu()
+    
     def inventory_menu(self):
-        # TODO self.inventory_menu = tk.Toplevel(self) // This is for the new window when we create that shit.
+        '''
+        Create the inventory menu to see the list of items. SECOND menu.
+        '''
+        # Label
         self.main_inventory_text = Label(self, text='Bienvenido', font=("Helvetica", 35))
         self.main_inventory_text.pack(pady=10)
 
-        # Search Input
+        # Search input
         self.search_input = Entry(self, width=55)
         self.search_input.place(x=50, y=100)
 
+        # Search button.
         self.search_button = Button(self, text='Buscar', command=self.search_item)
         self.search_button.place(x=570, y=98, height=30, width=60)
 
@@ -169,15 +228,6 @@ class App(Frame):
                 )
             )
 
-    def delete_main(self, command):
-        self.main_title.destroy()
-        self.billings.destroy()
-        self.inventory.destroy()
-        if command == 0:
-            # Should open inventory menu
-            self.inventory_menu()
-        else:
-            self.billings_menu()
 
     def modify_product(self):
         if self.tree.item(self.tree.focus())['text'] == '':
@@ -303,70 +353,69 @@ class Register_Product(Frame):
                 if is_existing_id(self.product_id.get()):
                     self.popup('Error', 'Ya existe ese ID')
                 else:
+                    product = Product(self.product_id.get(),
+                    self.product_name.get(),
+                    self.sale_value.get(),
+                    self.purchase_value.get(),
+                    self.stock.get())
                     if self.multiple_buttons.instate(['selected']):
-                        save_product((Product(
-                            self.product_id.get(), 
-                            self.product_name.get(), 
-                            self.sale_value.get(), 
-                            self.purchase_value.get(),
-                            self.stock.get()
-                        )))
+                        save_product(product)
                         self.popup('Alerta', 'Producto añadido')
                         self.erase_fields()
-                        self.load_last_item()                
                     else:
-                        save_product((Product(
-                            self.product_id.get(), 
-                            self.product_name.get(), 
-                            self.sale_value.get(), 
-                            self.purchase_value.get(),
-                            self.stock.get()
-                        )))
+                        save_product(product)
                         self.popup('Alerta', 'Producto añadido')                
                         self.master.destroy()
-                        self.load_last_item()
+                    self.load_last_item(product)
             else:
                 if is_existing_id(self.product_id.get()) and self.tree.item(self.tree.focus())['text'] != self.product_id.get():
                     self.popup('Error', 'Ya existe ese ID')
-                else:         
-                    modify_product(
+                else: 
+                    product_id = self.product_id.get()
+                    product_name = self.product_name.get()
+                    sale_value = self.sale_value.get()
+                    purchase_value = self.purchase_value.get()
+                    stock = self.stock.get()    
+                    new_index = modify_product(
                         self.tree.item(self.tree.focus())['text'],
                         Product(
-                            self.product_id.get(), 
-                            self.product_name.get(), 
-                            self.sale_value.get(), 
-                            self.purchase_value.get(),
-                            self.stock.get()
+                            product_id, 
+                            product_name, 
+                            sale_value, 
+                            purchase_value,
+                            stock
                         )
                     )
                     self.tree.insert(
                         "", 
-                        str(int(self.tree.focus()[1:])-1), 
-                        text=self.product_id.get(), 
+                        str(new_index), 
+                        text=product_id, 
                         values = (
-                            self.product_name.get(), 
-                            self.sale_value.get(), 
-                            self.purchase_value.get(),
-                            self.stock.get()
+                            product_name, 
+                            sale_value, 
+                            purchase_value,
+                            stock
                         )
                     )
                     self.tree.delete(self.tree.focus())
-                    
                     self.master.destroy()
         else:
             self.popup('Error', 'Hacen falta campos.')
     
-    def load_last_item(self):
-        product_list = load_products()[-1]
+    def load_last_item(self, product):
+        product_list = load_products()
+        for index in range(len(product_list)):
+            if product_list[index].product_id == product.product_id:
+                product_index = index
         self.tree.insert(
             "", 
-            "end", 
-            text=product_list.product_id, 
+            str(product_index), 
+            text=product.product_id, 
             values = (
-                product_list.product_name,
-                product_list.sale_value,
-                product_list.purchase_value,
-                product_list.stock
+                product.product_name,
+                product.sale_value,
+                product.purchase_value,
+                product.stock
             )
         )
 
@@ -391,35 +440,41 @@ class Register_Product(Frame):
 
 ############
 
+
 def save_product(product):
     db = shelve.open('Productos')
-    if len(db) > 0:
-        persistence = db['Productos']
-        persistence.append(product)
-        db['Productos'] = persistence
-    else:
-        db['Productos'] = []
-        db['Productos'] = [product]
+    persistence = db['Productos']
+    persistence.append(product)
+    db['Productos'] = persistence
     db.close()
 
 def load_products():
     db = shelve.open('Productos')
     if len(db) > 0:
-        return db['Productos']
+        products = db['Productos']
+        products = sorted(products, key=lambda product: int(product.product_id))
+        db['Productos'] = products
+        return products
     else:
+        db['Productos'] = []
         return []
 
 def modify_product(product_id, product):
     db = shelve.open('Productos')
     for index in range(len(db['Productos'])):
-        print(db['Productos'][index].product_id)
-        print(product_id)
         if db['Productos'][index].product_id == product_id:
-            persistence = db['Productos']
-            persistence[index] = product
-            db['Productos'] = persistence
+            products = db['Productos']
+            products[index] = product
+            break
+    products = sorted(products, key=lambda product: int(product.product_id))
+    db['Productos'] = products
+    for index in range(len(products)):
+
+        if products[index].product_id == product.product_id:
+            new_index = index
             break
     db.close()
+    return new_index
 
 def delete_product(id):
     db = shelve.open('Productos')
